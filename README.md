@@ -14,18 +14,20 @@ Information fetched from the ITU-T website are:
 
 ## How to use 
 
-1. Install required packages
+1. Use _uv_ tool to setup virtual environment with required packages:
 ```
-pip install -r requirements.txt
+uv sync
 ```
 
-2. Update meeting information in `generate_reports.py`:
+2. Update variables with meeting information in `generate_reports.py`:
 
 * `meetingDetails`: place and date, example: `"Geneva, 18-26 January 2023"`
 
-*  `meetingDate`: first day of the meeting in the format `YYMMDD`. For example, for the meeting starting January 18, 2023: `"230118"`
+* `meetingDate`: first day of the meeting in the format `YYMMDD`. For example, for the meeting starting January 18, 2023: `"230118"`
 
-2. Execute the script
+* `add_qall`: bool flag to include or exclude Cs/TDs allocated to question "QALL"
+
+3. Execute the script
 
 ```
 python generate_report.py 

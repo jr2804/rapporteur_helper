@@ -14,6 +14,7 @@ verbose = True
 questions = range(1, 21)
 # questions = [1,2, 7, 14]
 # meetingDate = "220607"
+add_qall = False
 
 # Update these parameters for each meeting
 studyGroup = 12
@@ -535,12 +536,15 @@ if __name__ == '__main__':
 
         try:
             hostname = 'https://www.itu.int'
-            endpoints = [
-                dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=QALL/{studyGroup}', prefix=f'SG{studyGroup}-C', title='Contributions'),
-                dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=Q{question}/{studyGroup}', prefix=f'SG{studyGroup}-C', title='Contributions'),
-                dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=QALL/{studyGroup}', prefix=f'SG{studyGroup}-TD', title='Temporary Documents'),
-                dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=Q{question}/{studyGroup}', prefix=f'SG{studyGroup}-TD', title='Temporary Documents'),
-            ]
+            endpoints_c = []
+            if add_qall:
+                endpoints_c += [dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=QALL/{studyGroup}', prefix=f'SG{studyGroup}-C', title='Contributions')]
+            endpoints_c += [dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=Q{question}/{studyGroup}', prefix=f'SG{studyGroup}-C', title='Contributions'),]
+
+            endpoints_td = []
+            if add_qall:
+                endpoints_td += [dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=QALL/{studyGroup}', prefix=f'SG{studyGroup}-TD', title='Temporary Documents'),]
+            endpoints_td += [dict(url = f'{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=Q{question}/{studyGroup}', prefix=f'SG{studyGroup}-TD', title='Temporary Documents'),]
             # pprint(endpoints)
 
             with open('template.docx', 'rb') as f:
@@ -557,14 +561,13 @@ if __name__ == '__main__':
             replace('[Insert an abstract]', abstract)
 
             # Insert contributions
-            endpoint = endpoints[0]
             docSection = find_element(document, 'Copy table of contributions')
-            insert_documents(docSection, [endpoints[0],endpoints[1]])
+            insert_documents(docSection, endpoints_c)
 
             # Insert temporary documents
             # print("  Inserting temporary documents")
             docSection = find_element(document, 'Copy the TD table')
-            insert_documents(docSection, [endpoints[2],endpoints[3]])
+            insert_documents(docSection, endpoints_td)
 
             # Replace question number
             replace(f'X/{studyGroup}', f'{question}/{studyGroup}')
