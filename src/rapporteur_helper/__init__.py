@@ -1,5 +1,7 @@
-from pathlib import Path
+from rapporteur_helper.generate_reports import main
 
-this_dir = Path(__file__).parent
-data_dir = this_dir / "data"
-template_file = data_dir / "template.docx"
+__all__ = ["main"]
+
+
+if __name__ == "__main__":
+    pass

@@ -1,85 +1,66 @@
-import os
-from pprint import pprint
+import logging
+from collections.abc import Iterable
+from datetime import datetime, timedelta
+from pathlib import Path
 
 from docx import Document as open_docx
 from docx.document import Document
 
-from . import template_file
-from .content.documents import insert_documents
-from .content.contacts import insert_contacts
-from .word_docx.paragraph import find_element, replace
-from .itut.questions import get_questions_details
-from .itut.work_programme import get_work_program, insert_work_program
+from rapporteur_helper.content.contacts import insert_contacts
+from rapporteur_helper.content.documents import insert_documents
+from rapporteur_helper.data.constants import template_file
+from rapporteur_helper.itut.endpoints import get_endpoint
+from rapporteur_helper.itut.questions import get_questions_details
+from rapporteur_helper.itut.work_programme import get_work_program, insert_work_program
+from rapporteur_helper.word_docx.paragraph import find_element, replace
+
+logger = logging.getLogger(__name__)
 
 
-questions = list(range(1, 21))
-# questions = [1,2, 7, 14]
-# meetingDate = "220607"
-add_qall = False
+def main(
+    meetingDate: str,
+    questions: Iterable[int],
+    meeting_place: str = "Geneva",
+    meeting_duration_days: int = 9,
+    studyGroup: int = 12,
+    studyPeriodId: int = 18,
+    studyPeriodStart: int = 25,
+    add_qall: bool = True,
+    output_dir: Path | None = None,
+    verbose: bool = True,
+):
+    # parse/check parameters
+    output_dir = Path.cwd() if output_dir is None else output_dir
+    output_dir /= meetingDate
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-# Update these parameters for each meeting
-studyGroup = 12
-meetingDetails = "Geneva, 14-23 January 2025"
-meetingDate = "250114"
+    # Meeting details
+    meetingDate = "20" + meetingDate
+    md_start = datetime.strptime(meetingDate, "%Y%m%d")  # validate format
+    md_end = md_start + timedelta(days=meeting_duration_days)
+    meetingDetails = f"{meeting_place}, {md_start.strftime('%d %B %Y')} - {md_end.strftime('%d %B %Y')}"
 
-# Update these parameters to the current study period
-studyPeriodId = 18
-studyPeriodStart = 25
-isn_sp = 9677
-
-def main(verbose: bool = True):
     try:
         questionInfo = get_questions_details(studyGroup, studyPeriodId)
         # pprint(questionInfo)
     except Exception as e:
-        print("Error - Cannot fetch question details from ITU-T website")
-        raise (e)
+        raise RuntimeError(f"Error - Cannot fetch question details from ITU-T website: {e}") from e
 
     for question in questions:
-        print(f"\n### Generating report for Q{question}")
+        logger.info(f"Generating report for Q{question}")
+        endpoints_c = []
+        endpoints_td = []
+
+        if add_qall:
+            endpoints_c.append(get_endpoint(studyGroup, None, studyPeriodStart, meetingDate, "C"))
+            endpoints_td.append(get_endpoint(studyGroup, None, studyPeriodStart, meetingDate, "TD"))
+
+        endpoints_c.append(get_endpoint(studyGroup, question, studyPeriodStart, meetingDate, "C"))
+        endpoints_td.append(get_endpoint(studyGroup, question, studyPeriodStart, meetingDate, "TD"))
 
         try:
-            hostname = "https://www.itu.int"
-            endpoints_c = []
-            if add_qall:
-                endpoints_c += [
-                    dict(
-                        url=f"{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=QALL/{studyGroup}",
-                        prefix=f"SG{studyGroup}-C",
-                        title="Contributions",
-                    )
-                ]
-            endpoints_c += [
-                dict(
-                    url=f"{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-C&question=Q{question}/{studyGroup}",
-                    prefix=f"SG{studyGroup}-C",
-                    title="Contributions",
-                ),
-            ]
-
-            endpoints_td = []
-            if add_qall:
-                endpoints_td += [
-                    dict(
-                        url=f"{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=QALL/{studyGroup}",
-                        prefix=f"SG{studyGroup}-TD",
-                        title="Temporary Documents",
-                    ),
-                ]
-            endpoints_td += [
-                dict(
-                    url=f"{hostname}/md/meetingdoc.asp?lang=en&parent=T{studyPeriodStart}-SG{studyGroup}-{meetingDate}-TD&question=Q{question}/{studyGroup}",
-                    prefix=f"SG{studyGroup}-TD",
-                    title="Temporary Documents",
-                ),
-            ]
-            # pprint(endpoints)
-
             with template_file.open("rb") as f:
                 document: Document = open_docx(f)
-
-            # for style in document.styles:
-            #     print(f"{style.name} {style.type}")
 
             # Meeting date
             replace(document, "[place, dates]", meetingDetails)
@@ -89,13 +70,13 @@ def main(verbose: bool = True):
             replace(document, "[Insert an abstract]", abstract)
 
             # Insert contributions
-            if (docSection := find_element(document, "Copy table of contributions")):
-                insert_documents(docSection, endpoints_c)
+            if docSection := find_element(document, "Copy table of contributions"):
+                insert_documents(docSection, endpoints_c, verbose=verbose)
 
             # Insert temporary documents
             # print("  Inserting temporary documents")
-            if (docSection := find_element(document, "Copy the TD table")):
-                insert_documents(docSection, endpoints_td)
+            if docSection := find_element(document, "Copy the TD table"):
+                insert_documents(docSection, endpoints_td, verbose=verbose)
 
             # Replace question number
             replace(document, f"X/{studyGroup}", f"{question}/{studyGroup}")
@@ -116,18 +97,46 @@ def main(verbose: bool = True):
             # pprint(workProgram)
             insert_work_program(document, workProgram)
 
-            try:
-                os.mkdir(f"./{meetingDate}")
-            except:
-                pass
+            output_file = output_dir / f"Q{question}_status_report.docx"
+            document.save(str(output_file))
 
-            document.save(f"./{meetingDate}/Q{question}_status_report.docx")
-
-        except Exception as e:
-            pprint(e)
-            #traceback.print_stack()
+        except Exception:
+            logger.exception(f"Error generating report for Q{question}")
+            # traceback.print_stack()
             # pprint(questionInfo)
 
 
 if __name__ == "__main__":
-    main()
+    # Update these parameters for each meeting
+    studyGroup = 12
+    meetingDate = "250114"  # meetingDate = "220607"
+    questions = list(range(1, 21))
+    # questions = [1,2, 7, 14]
+    meeting_duration_days = 9  # TODO: parse via web API?
+
+    # Update these parameters to the current study period
+    # TODO: derive values programmatically from the meeting date
+    studyPeriodId = 18
+    studyPeriodStart = 25
+
+    # misc. parameters
+    meeting_place = "Geneva"  # TODO: parse via web API?
+    add_qall = False
+    verbose = True
+
+    main(
+        meetingDate=meetingDate,
+        questions=questions,
+        meeting_place=meeting_place,
+        meeting_duration_days=meeting_duration_days,
+        studyGroup=studyGroup,
+        studyPeriodId=studyPeriodId,
+        studyPeriodStart=studyPeriodStart,
+        add_qall=add_qall,
+        verbose=verbose,
+    )
+
+
+if __name__ == "__main__":
+    pass
+# end of file

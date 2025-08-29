@@ -1,11 +1,19 @@
+from logging import getLogger
+
 import requests
 from lxml import html
 
+logger = getLogger("html")
+
+
 def get_html_tree(url):
     try:
-        x = requests.get(url)
-        tree = html.fromstring(x.content)
-        return tree
+        x = requests.get(url, timeout=30)
+        return html.fromstring(x.content)
     except Exception as e:
-        print(url)
-        raise (e)
+        logger.exception(f"Error fetching {url}")
+        raise
+
+
+if __name__ == "__main__":
+    pass

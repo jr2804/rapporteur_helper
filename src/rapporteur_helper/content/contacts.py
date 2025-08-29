@@ -1,4 +1,5 @@
 import copy
+
 from docx.document import Document
 
 from ..word_docx.paragraph import replace
@@ -67,6 +68,7 @@ def insert_contacts(document: Document, questionInfo):
                     text += f" with the assistance of {contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})"
 
     replace(document, target, text)
+
 
 if __name__ == "__main__":
     pass

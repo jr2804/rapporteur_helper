@@ -1,12 +1,18 @@
 import copy
+import logging
+
 import docx
 
 from ..html import get_html_tree
 from ..word_docx.tables import replace_in_table
 from ..word_docx.links import create_hyperlink
 
-def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int|None = None):
+logger = logging.getLogger(__name__)
+
+
+def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int | None = None):
     isn_sp = False
+    # isn_sp = 9677
 
     if isn_sp:
         # Preparing for the day the ITU-T API is being updated to only allow ISNs
@@ -36,15 +42,14 @@ def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int
     info = []
 
     if verbose:
-        print(f"  Fetching work program from: {url}")
+        logger.info(f"Fetching work program from: {url}")
     tree = get_html_tree(url)
 
     # Find and parse all rows (<tr>) in the document
     rows = tree.xpath("//table[contains(@id, 'tab_tabular_view_gd_wp_tabular')]/tr")
 
     if not len(rows) >= 1:
-        print("Error fetching work program - Please check query response")
-        raise ()
+        raise ValueError("Error fetching work program - no rows found - Please check query response")
 
     for row in rows:
         item = {}
@@ -79,8 +84,8 @@ def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int
                     tmp["href"] = editor.xpath(".//@href")[0].strip().replace("(AT)", "@")
                     tmp["name"] = editor.xpath("./text()")[0]
                     item["editors"].append(tmp)
-            except:
-                print("!!! Cannot retrieve editors")
+            except Exception:
+                logger.warning("Cannot retrieve editors")
                 pass
 
             # 8th column - base document(s)
@@ -102,6 +107,7 @@ def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int
             pass
 
     return info
+
 
 def insert_work_program(document, info):
     # Fid the work program table
@@ -143,6 +149,7 @@ def insert_work_program(document, info):
         replace_in_table(targetTable, "WP_BaseTexts", newRun)
 
     pass
+
 
 if __name__ == "__main__":
     pass

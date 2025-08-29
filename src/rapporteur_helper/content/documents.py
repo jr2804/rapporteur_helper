@@ -1,21 +1,26 @@
-import requests
+import logging
 import re
 from typing import Any
-from lxml import html
-from docx.text.paragraph import Paragraph
 
-from . import hostname
+import requests
+from docx.text.paragraph import Paragraph
+from lxml import html
+
+from ..data.constants import hostname
 from ..word_docx.links import add_hyperlink
 
-def insert_documents(docSection: Paragraph, endpoints: list|Any, verbose: bool = False, studyGroup: int = 12):
+logger = logging.getLogger(__name__)
+
+
+def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool = False, studyGroup: int = 12):
     if not isinstance(endpoints, list):
         endpoints = [endpoints]
 
     rows = []
     for endpoint in endpoints:
         if verbose:
-            print(f"  Retrieving documents from: {endpoint['url']}")
-        x = requests.get(endpoint["url"])
+            logger.info(f"Retrieving documents from: {endpoint['url']}")
+        x = requests.get(endpoint["url"], timeout=30)
         tree = html.fromstring(x.content)
 
         # Find and parse all rows (<tr>) in the document
