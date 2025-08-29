@@ -27,7 +27,7 @@ def main(
     studyPeriodStart: int = 25,
     add_qall: bool = True,
     output_dir: Path | None = None,
-    verbose: bool = True,
+    verbose: bool = False,
 ):
     # parse/check parameters
     output_dir = Path.cwd() if output_dir is None else output_dir
@@ -38,15 +38,27 @@ def main(
     meetingDate = "20" + meetingDate
     md_start = datetime.strptime(meetingDate, "%Y%m%d")  # validate format
     md_end = md_start + timedelta(days=meeting_duration_days)
-    meetingDetails = f"{meeting_place}, {md_start.strftime('%d %B %Y')} - {md_end.strftime('%d %B %Y')}"
+    year = md_start.strftime("%Y")
+    month = md_start.strftime("%B")
+    day1 = md_start.strftime("%d")
+    day2 = md_end.strftime("%d")
+
+    if md_start.month != md_end.month:
+        month2 = md_end.strftime("%B")
+        meetingDetails = f"{meeting_place}, {day1} {month} - {day2} {month2} {year}"
+    else:
+        meetingDetails = f"{meeting_place}, {day1} - {day2} {month} {year}"
 
     try:
         questionInfo = get_questions_details(studyGroup, studyPeriodId)
-        # pprint(questionInfo)
     except Exception as e:
         raise RuntimeError(f"Error - Cannot fetch question details from ITU-T website: {e}") from e
 
     for question in questions:
+        if question not in questionInfo:
+            logger.warning(f"Question {question} not found in questionInfo")
+            continue
+
         logger.info(f"Generating report for Q{question}")
         endpoints_c = []
         endpoints_td = []
