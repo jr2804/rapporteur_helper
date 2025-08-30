@@ -36,9 +36,14 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
         try:
             # A document row should have the attributes below
             # If not, then the row is ignored
+            if len(columns) < 4:
+                continue
 
             # Link and document number should be in the second column
-            link = hostname + "/" + columns[1].xpath(".//a")[0].attrib["href"].strip()
+            if (len(href := columns[1].xpath(".//a")) > 0) and (a := href[0].attrib.get("href")):
+                link = hostname + "/" + a.strip()
+            else:
+                continue
 
             try:
                 number = columns[1].xpath(".//a/strong/text()")[0].strip().replace("[ ", endpoint["prefix"]).replace(" ]", "")

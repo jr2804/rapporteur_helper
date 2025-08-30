@@ -78,11 +78,11 @@ def main(
             replace(document, "[place, dates]", meetingDetails)
 
             # Abstract
-            abstract = f"This document contains the Status report of Question {question}/{studyGroup}: {questionInfo[question]['title']} for the meeting in {meetingDetails}."
+            abstract = f'This document contains the Status report of Question {question}/{studyGroup}: "{questionInfo[question]["title"]}" for the meeting in {meetingDetails}.'
             replace(document, "[Insert an abstract]", abstract)
 
             # Insert contributions
-            if docSection := find_element(document, "Copy table of contributions"):
+            if docSection := find_element(document, "Copy table of contributions."):
                 insert_documents(docSection, endpoints_c, verbose=verbose)
 
             # Insert temporary documents
