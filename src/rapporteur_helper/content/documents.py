@@ -28,7 +28,7 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
 
     docSection.text = ""
 
-    # Parse  in descending order
+    # Parse in descending order
     for i in range(len(rows) - 1, 0, -1):
         row = rows[i]
         columns = row.xpath(".//td")
@@ -45,20 +45,18 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
             else:
                 continue
 
-            try:
-                number = columns[1].xpath(".//a/strong/text()")[0].strip().replace("[ ", endpoint["prefix"]).replace(" ]", "")
-            except:
-                # Handle case where documents have not yet been uploaded
-                number = columns[1].xpath(".//a/text()")[0].strip().replace("[ ", endpoint["prefix"]).replace(" ]", "")
+            text = columns[1].xpath(".//a/strong/text()")
+            if not text:
+                # Handle case where documents have not yet been uploaded -> no strong text
+                text = columns[1].xpath(".//a/text()")
+                if not text:
+                    continue
 
-            try:
-                revision = columns[1].xpath(".//font/text()")[0]
-                x = re.search(r"([\d]+)\)", revision)
+            number = text[0].strip().replace("[ ", endpoint["prefix"]).replace(" ]", "")
+
+            if len(revision := columns[1].xpath(".//font/text()")) > 0 and (x := re.search(r"([\d]+)\)", revision[0])):
                 revision = x.group(1)
                 number = f"{number}r{revision}"
-            except Exception as e:
-                # print(e)
-                pass
 
             # Title should be in third row
             title = columns[2].xpath(".//text()")[0].strip()
@@ -99,9 +97,7 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
             p.add_run("\n")
 
         except Exception as e:
-            # print(e)
-            # traceback.print_exc()
-            pass
+            logger.exception(f"Exception occurred while processing document row: {e}")
 
 
 if __name__ == "__main__":
