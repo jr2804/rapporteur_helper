@@ -5,6 +5,7 @@ from pathlib import Path
 
 from docx import Document as open_docx
 from docx.document import Document
+from docxtpl import DocxTemplate
 
 from rapporteur_helper.content.contacts import insert_contacts
 from rapporteur_helper.content.documents import insert_documents
@@ -35,8 +36,7 @@ def main(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Meeting details
-    meetingDate = "20" + meetingDate
-    md_start = datetime.strptime(meetingDate, "%Y%m%d")  # validate format
+    md_start = datetime.strptime("20" + meetingDate, "%Y%m%d")  # validate format
     md_end = md_start + timedelta(days=meeting_duration_days)
     year = md_start.strftime("%Y")
     month = md_start.strftime("%B")
@@ -69,17 +69,25 @@ def main(
 
         endpoints_c.append(get_endpoint(studyGroup, question, studyPeriodStart, meetingDate, "C"))
         endpoints_td.append(get_endpoint(studyGroup, question, studyPeriodStart, meetingDate, "TD"))
+        context_vars = {
+            "q": str(question),
+            "place_date": meetingDetails,
+            "sg": str(studyGroup),
+            "q_title": questionInfo[question]["title"],
+            "wp": questionInfo[question]["wp"],
+        }
+        abstract = f'This document contains the Status report of Question {question}/{studyGroup}: "{questionInfo[question]["title"]}" for the meeting in {meetingDetails}.'
+        context_vars["abstract"] = abstract
 
         try:
             with template_file.open("rb") as f:
                 document: Document = open_docx(f)
 
             # Meeting date
-            replace(document, "[place, dates]", meetingDetails)
+            # replace(document, "[place, dates]", meetingDetails)
 
             # Abstract
-            abstract = f'This document contains the Status report of Question {question}/{studyGroup}: "{questionInfo[question]["title"]}" for the meeting in {meetingDetails}.'
-            replace(document, "[Insert an abstract]", abstract)
+            # replace(document, "[Insert an abstract]", abstract)
 
             # Insert contributions
             if docSection := find_element(document, "Copy table of contributions."):
@@ -91,15 +99,15 @@ def main(
                 insert_documents(docSection, endpoints_td, verbose=verbose)
 
             # Replace question number
-            replace(document, f"X/{studyGroup}", f"{question}/{studyGroup}")
-            replace(document, f"t{studyPeriodStart}sg{studyGroup}qX@lists.itu.int", f"t{studyPeriodStart}sg{studyGroup}q{question}@lists.itu.int")
+            # replace(document, f"X/{studyGroup}", f"{question}/{studyGroup}")
+            # replace(document, f"t{studyPeriodStart}sg{studyGroup}qX@lists.itu.int", f"t{studyPeriodStart}sg{studyGroup}q{question}@lists.itu.int")
 
             # Replace working party number
-            replace(document, f"Working Party y/{studyGroup}", f"Working Party {questionInfo[question]['wp']}/{studyGroup}")
+            # replace(document, f"Working Party y/{studyGroup}", f"Working Party {questionInfo[question]['wp']}/{studyGroup}")
 
             # Replace question title
-            replace(document, "[title of question]", questionInfo[question]["title"])
-            replace(document, "Title of question", questionInfo[question]["title"])
+            # replace(document, "[title of question]", questionInfo[question]["title"])
+            # replace(document, "Title of question", questionInfo[question]["title"])
 
             # Insert contacts
             insert_contacts(document, questionInfo[question])
@@ -112,6 +120,10 @@ def main(
             output_file = output_dir / f"Q{question}_status_report.docx"
             document.save(str(output_file))
 
+            # replacements of remaining variables via docxtpl
+            doc = DocxTemplate(str(output_file))
+            doc.render(context_vars)
+            doc.save(str(output_file))
         except Exception:
             logger.exception(f"Error generating report for Q{question}")
             # traceback.print_stack()
