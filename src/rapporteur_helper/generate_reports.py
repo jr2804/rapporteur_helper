@@ -75,6 +75,7 @@ def main(
             "sg": str(studyGroup),
             "q_title": questionInfo[question]["title"],
             "wp": questionInfo[question]["wp"],
+            "rapporteur_ident": "Co-Rapporteurs" if len(questionInfo[question]["rapporteurs"]) > 1 else "Rapporteur",
         }
         abstract = f'This document contains the Status report of Question {question}/{studyGroup}: "{questionInfo[question]["title"]}" for the meeting in {meetingDetails}.'
         context_vars["abstract"] = abstract
@@ -109,7 +110,7 @@ def main(
             # replace(document, "[title of question]", questionInfo[question]["title"])
             # replace(document, "Title of question", questionInfo[question]["title"])
 
-            # Insert contacts
+            # Insert contact information of rapporteur(s)
             insert_contacts(document, questionInfo[question])
 
             # Insert work programme
