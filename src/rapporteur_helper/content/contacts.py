@@ -1,4 +1,5 @@
 import copy
+from typing import Any
 
 from docx.document import Document
 
@@ -6,7 +7,7 @@ from ..word_docx.paragraph import replace
 from ..word_docx.tables import replace_in_table
 
 
-def insert_contacts(document: Document, questionInfo):
+def insert_contacts(document: Document, questionInfo: dict[str, Any]):
     numContacts = len(questionInfo["rapporteurs"])
 
     # Fid the contact table
@@ -38,36 +39,42 @@ def insert_contacts(document: Document, questionInfo):
             replace_in_table(contactTable, "Tel:\t+xx", "")
         replace_in_table(contactTable, "a@b.com", f"{contact['email']}")
 
+
+def _get_contact_line(contact: dict) -> str:
+    return f"{contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})"
+
+
+def _concat_contact_lines(contact_lines: list[dict | str]) -> str:
+    # Concatenate contact lines with appropriate conjunctions
+    if not contact_lines:
+        return ""
+
+    lines = [_get_contact_line(c) for c in contact_lines] if all(isinstance(c, dict) for c in contact_lines) else [str(c) for c in contact_lines]
+
+    if len(lines) == 1:
+        return lines[0]
+    return ", ".join(lines[:-1]) + " and " + lines[-1]
+
+
+def get_chair_text(rapporteur_info: list[dict[str, str]]) -> str:
     # Format text for Section 1:
-    target = (
-        "the [co-] chairmanship of name of Rapporteur (organization, country) [with the assistance of name of associate Rapporteur (organization, country)]"
-    )
 
-    if numContacts == 1:
-        text = f"the chairmanship of {contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})"
-    else:
-        hasAssociate = False
-        for contact in questionInfo["rapporteurs"]:
-            if "Associate" in contact["role"]:
-                hasAssociate = True
-
-        if hasAssociate == False:
-            text = "the co-chairmanship of "
-            tmp = []
-            for contact in questionInfo["rapporteurs"]:
-                tmp.append(f"{contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})")
-            text += " and ".join(tmp)
+    # check: associate(s) vs co-rapporteur(s)?
+    rapporteurs = []
+    associates = []
+    for contact in rapporteur_info:
+        if "associate" in contact["role"].lower():
+            associates.append(contact)
         else:
-            text = "the chairmanship of "
-            for contact in questionInfo["rapporteurs"]:
-                if "Rapporteur" in contact["role"]:
-                    text += f"{contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})"
+            rapporteurs.append(contact)
 
-            for contact in questionInfo["rapporteurs"]:
-                if "Associate" in contact["role"]:
-                    text += f" with the assistance of {contact['firstName']} {contact['lastName']} ({contact['company']}, {contact['country']})"
+    text = "rapporteur" if len(rapporteurs) == 1 else "co-rapporteurs"
+    text += f" {_concat_contact_lines(rapporteurs)}"
 
-    replace(document, target, text)
+    if len(associates) > 0:
+        text += f", with the assistance of {_concat_contact_lines(associates)}"
+
+    return text
 
 
 if __name__ == "__main__":

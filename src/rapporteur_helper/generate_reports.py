@@ -7,13 +7,13 @@ from docx import Document as open_docx
 from docx.document import Document
 from docxtpl import DocxTemplate
 
-from rapporteur_helper.content.contacts import insert_contacts
+from rapporteur_helper.content.contacts import get_chair_text, insert_contacts
 from rapporteur_helper.content.documents import insert_documents
 from rapporteur_helper.data.constants import template_file
 from rapporteur_helper.itut.endpoints import get_endpoint
 from rapporteur_helper.itut.questions import get_questions_details
 from rapporteur_helper.itut.work_programme import get_work_program, insert_work_program
-from rapporteur_helper.word_docx.paragraph import find_element, replace
+from rapporteur_helper.word_docx.paragraph import find_element
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +76,7 @@ def main(
             "q_title": questionInfo[question]["title"],
             "wp": questionInfo[question]["wp"],
             "rapporteur_ident": "Co-Rapporteurs" if len(questionInfo[question]["rapporteurs"]) > 1 else "Rapporteur",
+            "chairing_persons": get_chair_text(questionInfo[question]["rapporteurs"]),
         }
         abstract = f'This document contains the Status report of Question {question}/{studyGroup}: "{questionInfo[question]["title"]}" for the meeting in {meetingDetails}.'
         context_vars["abstract"] = abstract
