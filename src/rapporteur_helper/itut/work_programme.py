@@ -1,11 +1,12 @@
 import copy
 import logging
+import string
 
 import docx
 
 from ..html import get_html_tree
-from ..word_docx.tables import replace_in_table
 from ..word_docx.links import create_hyperlink
+from ..word_docx.tables import replace_in_table
 
 logger = logging.getLogger(__name__)
 
@@ -110,17 +111,20 @@ def get_work_program(Q, verbose: bool = False, studyGroup: int = 12, isn_sp: int
 
 
 def insert_work_program(document, info):
-    # Fid the work program table
+    # Find the work program table
     targetTable = None
 
     for table in document.tables:
         for idx, row in enumerate(table.rows):
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    if targetTable != None:
-                        break
-                    if paragraph.text == "Approval process":
+                    s = paragraph.text.translate({ord(c): None for c in string.whitespace})
+                    if s.lower() == "approvalprocess":
                         targetTable = table
+                        break
+    if targetTable is None:
+        logger.error("Cannot find work program table in document!")
+        return
 
     for idx, work_item in enumerate(info):
         # Duplicate row
