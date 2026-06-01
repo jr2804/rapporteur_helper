@@ -1,0 +1,27 @@
+[tasks.format]
+description = "Format source code and markdown files"
+run = [
+    "undersort .",
+    "ruff check --select I --fix", # isort-equivalent sorting of imports
+    "ruff format .",
+]
+
+[tasks.format-md]
+description = "Format Markdown files"
+run = "uv tool run --with mdformat-front-matters mdformat . --exclude .config/ --end-of-line keep --number"
+
+[tasks.lint]
+description = "Lint source code and tests"
+run = "ruff check src/ packages/ tests/"
+
+[tasks.lint-fix]
+description = "Lint source code and tests and fix simple issues"
+run = "ruff check --fix src/ packages/ tests/"
+
+[tasks.lint-fix-unsafe]
+description = "Lint source code and tests and fix simple issues"
+run = "ruff check --fix --unsafe-fixes src tests"
+
+[tasks.type-check]
+description = "Type check source code and tests"
+run = "ty check src/ tests/ packages/"
