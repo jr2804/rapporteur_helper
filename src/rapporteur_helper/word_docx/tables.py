@@ -1,6 +1,10 @@
 
+from __future__ import annotations
 
-def replace_in_table(table, find, replace):
+from typing import Union
+
+
+def replace_in_table(table, find: str, replace: Union[str, object]) -> bool:
     for row in table.rows:
         for cell in row.cells:
             for subtable in cell.tables:

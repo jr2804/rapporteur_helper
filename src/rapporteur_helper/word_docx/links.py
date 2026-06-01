@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+from typing import Literal
+
 import docx
 from docx.document import Document
+from lxml.etree import _Element
 
-def create_hyperlink(document: Document, text: str, url, format=["None", "bold", "italic", "hyperlink", "button"][0]):
+HyperlinkFormat = Literal["None", "bold", "italic", "hyperlink", "button"]
+
+
+def create_hyperlink(document: Document, text: str, url: str, format: HyperlinkFormat = "None") -> _Element:
     # Create the w:hyperlink tag and add needed values
     hyperlink = docx.oxml.shared.OxmlElement("w:hyperlink")
 
@@ -62,7 +70,7 @@ def create_hyperlink(document: Document, text: str, url, format=["None", "bold",
     return hyperlink
 
 
-def add_hyperlink(paragraph, text, url, format=["None", "bold", "italic", "hyperlink", "button"][0]):
+def add_hyperlink(paragraph, text: str, url: str, format: HyperlinkFormat = "None") -> _Element:
     # :param paragraph: The paragraph we are adding the hyperlink to.
     # :param text: The text displayed for the url
     # :param url: A string containing the required url
