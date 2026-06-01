@@ -1,3 +1,5 @@
+"""Document list retrieval and insertion utilities for ITU-T rapporteur reports."""
+
 import logging
 import re
 from typing import Any
@@ -6,13 +8,23 @@ import requests
 from docx.text.paragraph import Paragraph
 from lxml import html
 
+from ..cache import fetch_with_cache
 from ..data.constants import hostname
 from ..word_docx.links import add_hyperlink
 
 logger = logging.getLogger(__name__)
 
 
-def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool = False, studyGroup: int = 12):
+def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool = False, studyGroup: int = 12) -> None:
+    """Fetch ITU-T meeting documents and insert them as hyperlinks into *docSection*.
+
+    Args:
+        docSection: The paragraph element that will receive the document list.
+        endpoints: A single endpoint dict or a list of endpoint dicts, each
+            with a ``'url'`` key pointing to the ITU-T meeting documents page.
+        verbose: Log each endpoint URL before fetching when ``True``.
+        studyGroup: ITU-T Study Group number used for filtering.
+    """
     if not isinstance(endpoints, list):
         endpoints = [endpoints]
 
@@ -20,8 +32,8 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
     for endpoint in endpoints:
         if verbose:
             logger.info(f"Retrieving documents from: {endpoint['url']}")
-        x = requests.get(endpoint["url"], timeout=30)
-        tree = html.fromstring(x.content)
+        content = fetch_with_cache(endpoint["url"], lambda url: requests.get(url, timeout=30).content)
+        tree = html.fromstring(content)
 
         # Find and parse all rows (<tr>) in the document
         rows += tree.xpath("//tr")
@@ -63,13 +75,13 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
             sources = columns[3].xpath(".//a")
             src = []
             for source in sources:
-                src.append(dict(link=f"{hostname}/{source.attrib['href']}", text=source.text.strip()))
+                src.append({"link": f"{hostname}/{source.attrib['href']}", "text": source.text.strip()})
 
             # Relevant questions should be in fourth column
             questions = columns[4].xpath(".//a")
             q = []
             for quest in questions:
-                q.append(dict(link=f"{hostname}/{quest.attrib['href']}", text=quest.text.strip().replace(f"/{studyGroup}", "")))
+                q.append({"link": f"{hostname}/{quest.attrib['href']}", "text": quest.text.strip().replace(f"/{studyGroup}", "")})
 
             # Generate word document block for this document
             # p = document.add_paragraph()

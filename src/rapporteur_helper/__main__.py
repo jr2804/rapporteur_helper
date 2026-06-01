@@ -1,3 +1,5 @@
+"""Command-line entry point for rapporteur_helper."""
+
 import logging
 from pathlib import Path
 
@@ -33,7 +35,7 @@ def cli(
     add_qall: bool,
     output_dir: Path,
     verbose: bool,
-):
+) -> None:
     """ITU-T Rapporteur's status report generator.
 
     This tool generates status reports for ITU-T Study Group questions based on

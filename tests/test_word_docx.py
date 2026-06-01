@@ -1,5 +1,8 @@
 """Tests for word_docx utilities — no filesystem I/O required."""
+
 from __future__ import annotations
+
+from pathlib import Path
 
 import docx
 import pytest
@@ -9,7 +12,7 @@ from rapporteur_helper.word_docx.links import add_hyperlink, create_hyperlink
 from rapporteur_helper.word_docx.tables import replace_in_table
 
 
-@pytest.fixture()
+@pytest.fixture
 def blank_document() -> Document:
     return docx.Document()
 
@@ -68,9 +71,9 @@ class TestReplaceInTable:
         result = replace_in_table(table, "NOTPRESENT", "anything")
         assert result is False
 
-    def test_no_filesystem_io(self, blank_document: Document, tmp_path) -> None:
+    def test_no_filesystem_io(self, blank_document: Document, tmp_path: Path) -> None:
         """Verify replace_in_table never writes files — document stays in memory."""
-        import os
+
         table = blank_document.add_table(rows=1, cols=1)
         table.cell(0, 0).paragraphs[0].add_run("value")
         replace_in_table(table, "value", "new_value")

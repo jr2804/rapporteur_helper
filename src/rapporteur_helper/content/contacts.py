@@ -1,28 +1,36 @@
+"""Contact table insertion and formatting utilities for ITU-T rapporteur reports."""
+
 import copy
 from typing import Any
 
 from docx.document import Document
 
-from ..word_docx.paragraph import replace
 from ..word_docx.tables import replace_in_table
 
 
-def insert_contacts(document: Document, questionInfo: dict[str, Any]):
+def insert_contacts(document: Document, questionInfo: dict[str, Any]) -> None:
+    """Populate the contact table in *document* with rapporteur information.
+
+    Args:
+        document: The Word document containing the contact template table.
+        questionInfo: Mapping with a ``'rapporteurs'`` key holding a list of
+            contact dicts as returned by ``get_questions_details``.
+    """
     numContacts = len(questionInfo["rapporteurs"])
 
     # Fid the contact table
     contactTable = None
     for table in document.tables:
-        for idx, row in enumerate(table.rows):
+        for _idx, row in enumerate(table.rows):
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    if contactTable != None:
+                    if contactTable is not None:
                         break
                     if paragraph.text == "Contact:":
                         contactTable = table
 
     # Add contacts row if necessary (there are two in the template)
-    for i in range(0, numContacts - 2, 1):
+    for _i in range(0, numContacts - 2, 1):
         contactTable.rows[-1]._tr.addnext(copy.deepcopy(contactTable.rows[-1]._tr))
 
     if numContacts == 1:
@@ -57,6 +65,15 @@ def _concat_contact_lines(contact_lines: list[dict | str]) -> str:
 
 
 def get_chair_text(rapporteur_info: list[dict[str, str]]) -> str:
+    """Build the Section 1 rapporteur text string.
+
+    Args:
+        rapporteur_info: List of contact dicts, each containing at least
+            ``'role'``, ``'firstName'``, ``'lastName'``, and ``'company'``.
+
+    Returns:
+        A formatted string listing rapporteurs and any associates.
+    """
     # Format text for Section 1:
 
     # check: associate(s) vs co-rapporteur(s)?

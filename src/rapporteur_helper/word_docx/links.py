@@ -1,17 +1,33 @@
+"""Word document hyperlink creation utilities."""
+
 from __future__ import annotations
 
 from typing import Literal
 
 import docx
 from docx.document import Document
+from docx.oxml.shared import OxmlElement, qn
+from docx.text.paragraph import Paragraph
 from lxml.etree import _Element
 
 HyperlinkFormat = Literal["None", "bold", "italic", "hyperlink", "button"]
 
 
 def create_hyperlink(document: Document, text: str, url: str, format: HyperlinkFormat = "None") -> _Element:
+    """Create a ``w:hyperlink`` XML element with an external relationship.
+
+    Args:
+        document: The Word document used to register the hyperlink relationship.
+        text: Display text for the hyperlink.
+        url: Target URL.
+        format: Visual style to apply — ``'None'``, ``'bold'``, ``'italic'``,
+            ``'hyperlink'``, or ``'button'``.
+
+    Returns:
+        A ``w:hyperlink`` lxml element ready to append to a paragraph.
+    """
     # Create the w:hyperlink tag and add needed values
-    hyperlink = docx.oxml.shared.OxmlElement("w:hyperlink")
+    hyperlink = OxmlElement("w:hyperlink")
 
     # Access to the document settings (DocumentPart) to create a new relation id value
     documentPart = document.part
@@ -19,26 +35,26 @@ def create_hyperlink(document: Document, text: str, url: str, format: HyperlinkF
 
     # Attach the relation ID to the hyperlink object
     hyperlink.set(
-        docx.oxml.shared.qn("r:id"),
+        qn("r:id"),
         r_id,
     )
 
     # Create a w:r element
-    new_run = docx.oxml.shared.OxmlElement("w:r")
+    new_run = OxmlElement("w:r")
 
     # Create a new w:rPr element
-    rPr = docx.oxml.shared.OxmlElement("w:rPr")
+    rPr = OxmlElement("w:rPr")
 
     if format == "italic":
-        rStyle = docx.oxml.shared.OxmlElement("w:i")
+        rStyle = OxmlElement("w:i")
         rPr.append(rStyle)
     if format == "bold":
-        rStyle = docx.oxml.shared.OxmlElement("w:b")
+        rStyle = OxmlElement("w:b")
         rPr.append(rStyle)
 
     if format == "hyperlink":
-        rStyle = docx.oxml.shared.OxmlElement("w:rStyle")
-        rStyle.set(docx.oxml.shared.qn("w:val"), "Hyperlink")
+        rStyle = OxmlElement("w:rStyle")
+        rStyle.set(qn("w:val"), "Hyperlink")
         rPr.append(rStyle)
 
     # Join all the xml elements together and add the required text to the w:r element
@@ -49,17 +65,17 @@ def create_hyperlink(document: Document, text: str, url: str, format: HyperlinkF
 
     if format == "button":
         # Create a link button with the Hyperlink style, prettier than coloring the whole text
-        new_run = docx.oxml.shared.OxmlElement("w:r")
+        new_run = OxmlElement("w:r")
         new_run.text = "  "
         hyperlink.append(new_run)
 
-        new_run = docx.oxml.shared.OxmlElement("w:r")
+        new_run = OxmlElement("w:r")
         # Unicode character for "download"
         # https://www.fileformat.info/info/unicode/char/2913/fontsupport.htm
 
-        rStyle = docx.oxml.shared.OxmlElement("w:rStyle")
-        rStyle.set(docx.oxml.shared.qn("w:val"), "Hyperlink")
-        rPr = docx.oxml.shared.OxmlElement("w:rPr")
+        rStyle = OxmlElement("w:rStyle")
+        rStyle.set(qn("w:val"), "Hyperlink")
+        rPr = OxmlElement("w:rPr")
         rPr.append(rStyle)
         new_run.append(rPr)
 
@@ -70,13 +86,19 @@ def create_hyperlink(document: Document, text: str, url: str, format: HyperlinkF
     return hyperlink
 
 
-def add_hyperlink(paragraph, text: str, url: str, format: HyperlinkFormat = "None") -> _Element:
-    # :param paragraph: The paragraph we are adding the hyperlink to.
-    # :param text: The text displayed for the url
-    # :param url: A string containing the required url
-    # :param format: Style to apply to the text ['None', 'bold','italic']
-    #     :return: The hyperlink object
+def add_hyperlink(paragraph: Paragraph, text: str, url: str, format: HyperlinkFormat = "None") -> _Element:
+    """Create a hyperlink and append it to *paragraph*.
 
+    Args:
+        paragraph: The paragraph to append the hyperlink to.
+        text: Display text for the hyperlink.
+        url: Target URL.
+        format: Visual style — ``'None'``, ``'bold'``, ``'italic'``,
+            ``'hyperlink'``, or ``'button'``.
+
+    Returns:
+        The appended ``w:hyperlink`` lxml element.
+    """
     # Create hyperlink
     hyperlink = create_hyperlink(paragraph, text, url, format)
 

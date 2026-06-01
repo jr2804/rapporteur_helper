@@ -1,9 +1,11 @@
+"""Word document paragraph insertion and text replacement utilities."""
+
 import docx
 from docx.document import Document
 from docx.text.paragraph import Paragraph
 
 
-def insert_paragraph_after(paragraph: Paragraph, text=None, style=None):
+def insert_paragraph_after(paragraph: Paragraph, text: str | None = None, style: str | None = None):
     """Insert a new paragraph after the given paragraph."""
     new_p = docx.oxml.shared.OxmlElement("w:p")
     paragraph._p.addnext(new_p)
@@ -15,13 +17,29 @@ def insert_paragraph_after(paragraph: Paragraph, text=None, style=None):
     return new_para
 
 
-def find_element(document: Document, text) -> Paragraph | None:
+def find_element(document: Document, text: str) -> Paragraph | None:
+    """Return the first paragraph in *document* containing *text*, or ``None``.
+
+    Args:
+        document: The Word document to search.
+        text: The substring to find.
+
+    Returns:
+        The matching :class:`Paragraph`, or ``None`` if not found.
+    """
     for paragraph in document.paragraphs:
         if text in paragraph.text:
             return paragraph
 
 
-def replace(document: Document, find: str, replace: str):
+def replace(document: Document, find: str, replace: str) -> None:
+    """Replace all occurrences of *find* with *replace* in every paragraph and table cell.
+
+    Args:
+        document: The Word document to modify in-place.
+        find: The text string to search for.
+        replace: The replacement text string.
+    """
     for paragraph in document.paragraphs:
         foundInRun = False
         for run in paragraph.runs:

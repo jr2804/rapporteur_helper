@@ -1,3 +1,5 @@
+"""Main report generation orchestrator for ITU-T rapporteur helper."""
+
 import logging
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -29,7 +31,21 @@ def main(
     add_qall: bool = True,
     output_dir: Path | None = None,
     verbose: bool = False,
-):
+) -> None:
+    """Generate rapporteur helper Word documents for one or more questions.
+
+    Args:
+        meetingDate: Meeting date string in ``YYMMDD`` format (e.g. ``'250909'``).
+        questions: Iterable of ITU-T question numbers to process.
+        meeting_place: City where the meeting is held.
+        meeting_duration_days: Duration of the meeting in days.
+        studyGroup: ITU-T Study Group number.
+        studyPeriodId: Study period identifier used for API queries.
+        studyPeriodStart: Two-digit study period start year used for API queries.
+        add_qall: When ``True``, include documents for all questions in each report.
+        output_dir: Directory for generated reports; defaults to ``Path.cwd()``.
+        verbose: Enable verbose logging when ``True``.
+    """
     # parse/check parameters
     output_dir = Path.cwd() if output_dir is None else output_dir
     output_dir /= meetingDate

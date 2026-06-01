@@ -1,3 +1,5 @@
+"""ITU-T question details retrieval and parsing utilities."""
+
 import contextlib
 import logging
 import re
@@ -11,16 +13,38 @@ logger = logging.getLogger(__name__)
 
 
 class QuestionDetailsParseException(Exception):
-    def __init__(self, url):
+    def __init__(self, url: str) -> None:
         super().__init__(f"get_questions_details - Could not parse question details from {url}")
 
 
 def find_span_in_row(row: HtmlElement, span_id: str) -> str | None:
+    """Return the text of the first span whose ``id`` contains *span_id*, or ``None``.
+
+    Args:
+        row: The HTML row element to search within.
+        span_id: Substring to match against the span ``id`` attribute.
+
+    Returns:
+        The text content of the matched span, or ``None`` if not found.
+    """
     matched_item = row.xpath(f".//span[contains(@id,'{span_id}')]/text()")
     return matched_item[0] if matched_item else None
 
 
 def get_questions_details(studyGroup: int, studyPeriodId: int) -> dict:
+    """Fetch and parse rapporteur contact details for all questions in a study period.
+
+    Args:
+        studyGroup: ITU-T Study Group number.
+        studyPeriodId: Numeric study period identifier.
+
+    Returns:
+        A dict keyed by question number, each value containing ``'wp'``,
+        ``'title'``, and ``'rapporteurs'`` entries.
+
+    Raises:
+        QuestionDetailsParseException: If no question data could be parsed.
+    """
     info = {}
     qNum = -1
     url = f"https://www.itu.int/net4/ITU-T/lists/loqr.aspx?Group={studyGroup}&Period={studyPeriodId}"
@@ -37,14 +61,18 @@ def get_questions_details(studyGroup: int, studyPeriodId: int) -> dict:
             tmp = tmp[0]
             try:
                 res = re.search(rf"Q(\d+)/{studyGroup}.*WP(\d+)/{studyGroup}", tmp)
+                if res is None:
+                    raise AttributeError("Pattern did not match")
                 qNum = int(res.group(1))
                 wpNum = int(res.group(2))
-            except Exception as e:
+            except (AttributeError, ValueError, IndexError) as e:
                 # If it fails, check that it is because there is no WP number
                 res = re.search(rf"Q(\d+)/{studyGroup}.*", tmp)
+                if res is None:
+                    raise AttributeError("Could not parse question number") from e
                 qNum = int(res.group(1))
                 wpNum = -1
-                logger.warning(f"Could not parse WP number for question {qNum}: {e} -> Plenary Question?")
+                logger.warning("Could not parse WP number for question %s: %s -> Plenary Question?", qNum, e, exc_info=True)
 
             # try:
             # Question title
@@ -72,7 +100,7 @@ def get_questions_details(studyGroup: int, studyPeriodId: int) -> dict:
                 tmp["address"] = " ".join(row.xpath(".//span[contains(@id,'dtlRappQues_lblAddress')]/text()"))
                 tmp["country"] = row.xpath(".//span[contains(@id,'dtlRappQues_lblAddress')]/text()")[-1]
 
-                with contextlib.suppress(Exception):
+                with contextlib.suppress(IndexError):
                     # Some Rapporteurs do not have a telephone number available
                     tmp["tel"] = row.xpath(".//span[contains(@id,'dtlRappQues_telLabel')]/text()")[0]
                 tmp["email"] = row.xpath(".//a[contains(@id,'dtlRappQues_linkemail')]/text()")[0].replace("[at]", "@")

@@ -1,16 +1,27 @@
+"""HTTP fetch utilities returning lxml HTML trees."""
+
 from logging import getLogger
 
 import requests
 from lxml import html
+from lxml.html import HtmlElement
+
+from ..cache import fetch_with_cache
 
 logger = getLogger("html")
 
 
-def get_html_tree(url):
+def _fetch_html(url: str) -> bytes:
+    x = requests.get(url, timeout=30)
+    return x.content
+
+
+def get_html_tree(url: str) -> HtmlElement:
+    """Fetch a URL and return the content as an lxml HTML element tree."""
     try:
-        x = requests.get(url, timeout=30)
-        return html.fromstring(x.content)
-    except Exception as e:
+        content = fetch_with_cache(url, _fetch_html)
+        return html.fromstring(content)
+    except Exception:
         logger.exception(f"Error fetching {url}")
         raise
 
