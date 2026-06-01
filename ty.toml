@@ -1,0 +1,15 @@
+# Rules for ty, the extremely fast type checker for Python!
+# See: https://docs.astral.sh/ty/configuration/
+
+[environment]
+#python = "./.venv"
+python-version = "3.13"
+
+[src]
+include = [
+    "src",
+    "tests",
+]
+
+[terminal]
+error-on-warning = true

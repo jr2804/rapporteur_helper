@@ -1,0 +1,80 @@
+target-version = "py313"
+line-length = 160
+fix = true
+unsafe-fixes = true
+exclude = [
+    ".venv",
+    ".tmp",
+    "build",
+    "dist",
+    "__pypackages__",
+]
+
+[lint]
+preview = true
+explicit-preview-rules = true
+select = [
+    "YTT",
+    "S",
+    "B",
+    "A",
+    "C4",
+    "T10",
+    "SIM",
+    "I",
+    "C90",
+    "E", "W",
+    "F",
+    "PGH",
+    "UP",
+    "UP045",
+    "RUF",
+    "TRY",
+    "D",
+    "PT",
+    "PL",
+    "ANN",
+    "NPY",
+]
+extend-select = [
+    "RUF022",
+    "PLR6301",
+    "PLC0415",
+    "E402",
+]
+ignore = [
+    "E501",
+    "E731",
+    "TRY003",
+    "TRY300",
+    "PLR0913",
+    "PLR0917",
+    "PLR2004",
+    "PLR6104",
+    "D105",
+    "D107",
+    "D203",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "D415",
+    "ANN401",
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "D", "PLR2004"]
+
+[lint.pylint]
+max-locals = 20
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+known-first-party = ["rapporteur_helper"]
+
+[format]
+preview = true
+docstring-code-format = true
+docstring-code-line-length = 160
