@@ -5,24 +5,20 @@ description = "ITU-T Rapporteur's status report generator"
 authors = [{ name = "Jan Reimes", email = "jan.reimes@gmail.com" }]
 readme = "README.md"
 keywords = ['python']
-requires-python = ">=3.13,<4.0"
+requires-python = ">=3.13,<3.14"
 classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "click>=8.2.1",
     "docxtpl>=0.20.1",
     "lxml>=6.1.1",
     "python-docx>=1.2.0",
     "requests>=2.32.5",
+    "typer>=0.26.4",
 ]
 
 [project.urls]
@@ -48,8 +44,8 @@ requires = ["uv_build>=0.8.14"]
 build-backend = "uv_build"
 
 [project.scripts]
-rapporteur_helper = "rapporteur_helper.__main__:cli"
-rapporteur-helper = "rapporteur_helper.__main__:cli"
+rapporteur_helper = "rapporteur_helper.cli.main:app"
+rapporteur-helper = "rapporteur_helper.cli.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
