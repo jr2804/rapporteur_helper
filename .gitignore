@@ -219,3 +219,5 @@ uv.lock
 /.github
 opencode.json
 /.planning
+RESEARCH.md
+.vscode
