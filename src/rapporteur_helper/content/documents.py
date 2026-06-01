@@ -108,8 +108,8 @@ def insert_documents(docSection: Paragraph, endpoints: list | Any, verbose: bool
 
             p.add_run("\n")
 
-        except Exception as e:
-            logger.exception(f"Exception occurred while processing document row: {e}")
+        except (IndexError, AttributeError, KeyError):
+            logger.exception("Exception occurred while processing document row")
 
 
 if __name__ == "__main__":

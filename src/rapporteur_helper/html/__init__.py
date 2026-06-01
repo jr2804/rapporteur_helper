@@ -21,7 +21,7 @@ def get_html_tree(url: str) -> HtmlElement:
     try:
         content = fetch_with_cache(url, _fetch_html)
         return html.fromstring(content)
-    except Exception:
+    except (requests.RequestException, ValueError):
         logger.exception(f"Error fetching {url}")
         raise
 

@@ -1,6 +1,4 @@
-"""
-Module for constants, definitions, fixed paths, etc.
-"""
+"""Module for constants, definitions, fixed paths, etc."""
 
 from pathlib import Path
 
