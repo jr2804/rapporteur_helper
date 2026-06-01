@@ -1,0 +1,34 @@
+[tasks.add-skills]
+description = "Add skills to the agent"
+
+run = [
+    "cls",
+    # python/development skills
+    "bun x skills add jr2804/prompts -a universal -y -s python-ultimate -s docx -s docx-svg -s docling-document-intelligence -s pdf -s pptx -s xlsx",
+    "bun x skills add https://github.com/jiatastic/open-python-skills -a universal -y -s ty-skills -s pydantic",
+    "bun x skills add https://github.com/s2005/uv-skill -a universal -y",
+    "bun x skills add https://github.com/neoeinstein/claude-plugins -s mise -a universal -y",
+    "bun x skills add AbdoKnbGit/opencode-simplify -a universal -y",
+
+    # anti-AI hallucination skills
+    "bun x skills add https://github.com/alinaqi/claude-bootstrap -s code-deduplication -a universal -y",
+    "bun x skills add https://github.com/hardikpandya/stop-slop -a universal -y",
+
+    # skills for other tools
+    "bun x skills add https://github.com/jgraph/drawio-mcp -a universal -y",
+    "bun x skills add https://github.com/nicobailon/visual-explainer -a universal -y",
+    "bun x skills add https://github.com/FlorianBruniaux/claude-code-ultimate-guide/tree/main/examples -s rtk-optimizer -a universal -y",
+    "bun x skills add run-llama/llamaparse-agent-skills --skill liteparse -a universal -y",
+    "bun x skills add kreuzberg-dev/kreuzberg -a universal -y",
+
+    # skills for standard doc drafting
+    "bun x skills add jr2804/prompts -a universal -y -s itut-basics -s itut-patents -s itut-recommendations -s itut-drafting -s itut-contributions",
+    "bun x skills add jr2804/prompts -a universal -y -s sdo-docx-formatting -s sdo-docx-operations -s sdo-writing-conventions -s sdo-writing-style",
+    "bun x skills add iOfficeAI/OfficeCLI -a universal -y -s officecli -s officecli-docx",
+
+    # skill for project-specific tools/MCP servers
+    "bun x skills add https://github.com/AlmogBaku/debug-skill -a universal -y", # for dab tool -> AlmogBaku/debug-skill
+    "bun x skills add AlmogBaku/debug-skill -a universal -y",
+
+
+]

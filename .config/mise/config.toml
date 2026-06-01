@@ -1,0 +1,25 @@
+[tools]
+# CLI tools rg and tree-cli -> use `rg --files | tree-cli --fromfile` to get a nice tree view of the project files
+ripgrep = "latest"
+"github:peteretelej/tree" = { version = "latest", rename_exe = "tree-cli" }
+
+# Linter/formatter/type checker tools
+"ruff" = "latest"
+"ty" = "latest"
+"pipx:mdformat" = "latest"
+"pipx:undersort" = "latest"
+"github:djinn-soul/CytoScnPy" = "latest"
+
+# office/document tools
+"github:iOfficeAI/OfficeCLI" = "latest"
+"github:kreuzberg-dev/kreuzberg" = "latest"
+"npm:@llamaindex/liteparse" = "latest"
+
+[settings]
+experimental = true
+
+[settings.npm]
+package_manager = "bun"
+
+[settings.pipx]
+uvx = true
