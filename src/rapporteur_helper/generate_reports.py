@@ -2,18 +2,19 @@
 
 import logging
 from collections.abc import Iterable
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from docx import Document as open_docx
 from docx.document import Document
 from docxtpl import DocxTemplate
+from requests.exceptions import RequestException
 
 from rapporteur_helper.content.contacts import get_chair_text, insert_contacts
 from rapporteur_helper.content.documents import insert_documents
 from rapporteur_helper.data.constants import template_file
 from rapporteur_helper.itut.endpoints import get_endpoint
-from rapporteur_helper.itut.questions import get_questions_details
+from rapporteur_helper.itut.meeting import MeetingInfo, fetch_meeting_info
+from rapporteur_helper.itut.questions import QuestionDetailsParseException, get_questions_details
 from rapporteur_helper.itut.work_programme import get_work_program, insert_work_program
 from rapporteur_helper.word_docx.paragraph import find_element
 
@@ -21,10 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(
-    meetingDate: str,
     questions: Iterable[int],
-    meeting_place: str = "Geneva",
-    meeting_duration_days: int = 9,
+    meeting_info: MeetingInfo | None = None,
     studyGroup: int = 12,
     studyPeriodId: int = 18,
     studyPeriodStart: int = 25,
@@ -35,10 +34,8 @@ def main(
     """Generate rapporteur helper Word documents for one or more questions.
 
     Args:
-        meetingDate: Meeting date string in ``YYMMDD`` format (e.g. ``'250909'``).
         questions: Iterable of ITU-T question numbers to process.
-        meeting_place: City where the meeting is held.
-        meeting_duration_days: Duration of the meeting in days.
+        meeting_info: Meeting information; if None, fetched from ITU-T website.
         studyGroup: ITU-T Study Group number.
         studyPeriodId: Study period identifier used for API queries.
         studyPeriodStart: Two-digit study period start year used for API queries.
@@ -46,28 +43,19 @@ def main(
         output_dir: Directory for generated reports; defaults to ``Path.cwd()``.
         verbose: Enable verbose logging when ``True``.
     """
-    # parse/check parameters
+    if meeting_info is None:
+        meeting_info = fetch_meeting_info(studyGroup)
+
+    meetingDate = meeting_info.meeting_date
+    meetingDetails = meeting_info.meeting_details
+
     output_dir = Path.cwd() if output_dir is None else output_dir
     output_dir /= meetingDate
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Meeting details
-    md_start = datetime.strptime("20" + meetingDate, "%Y%m%d")  # validate format
-    md_end = md_start + timedelta(days=meeting_duration_days)
-    year = md_start.strftime("%Y")
-    month = md_start.strftime("%B")
-    day1 = md_start.strftime("%d")
-    day2 = md_end.strftime("%d")
-
-    if md_start.month != md_end.month:
-        month2 = md_end.strftime("%B")
-        meetingDetails = f"{meeting_place}, {day1} {month} - {day2} {month2} {year}"
-    else:
-        meetingDetails = f"{meeting_place}, {day1} - {day2} {month} {year}"
-
     try:
         questionInfo = get_questions_details(studyGroup, studyPeriodId)
-    except Exception as e:
+    except (QuestionDetailsParseException, RequestException, AttributeError, IndexError, ValueError) as e:
         raise RuntimeError(f"Error - Cannot fetch question details from ITU-T website: {e}") from e
 
     for question in questions:
@@ -142,43 +130,27 @@ def main(
             doc = DocxTemplate(str(output_file))
             doc.render(context_vars)
             doc.save(str(output_file))
-        except Exception:
+        except (OSError, ValueError):
             logger.exception(f"Error generating report for Q{question}")
             # traceback.print_stack()
             # pprint(questionInfo)
 
 
 if __name__ == "__main__":
-    # Update these parameters for each meeting
     studyGroup = 12
-    meetingDate = "250114"  # meetingDate = "220607"
     questions = list(range(1, 21))
-    # questions = [1,2, 7, 14]
-    meeting_duration_days = 9  # TODO: parse via web API?
 
-    # Update these parameters to the current study period
-    # TODO: derive values programmatically from the meeting date
     studyPeriodId = 18
     studyPeriodStart = 25
 
-    # misc. parameters
-    meeting_place = "Geneva"  # TODO: parse via web API?
     add_qall = False
     verbose = True
 
     main(
-        meetingDate=meetingDate,
         questions=questions,
-        meeting_place=meeting_place,
-        meeting_duration_days=meeting_duration_days,
         studyGroup=studyGroup,
         studyPeriodId=studyPeriodId,
         studyPeriodStart=studyPeriodStart,
         add_qall=add_qall,
         verbose=verbose,
     )
-
-
-if __name__ == "__main__":
-    pass
-# end of file
